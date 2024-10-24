@@ -5,7 +5,12 @@ Code Only Tested in Linux!
 
 ## Formulas
 * [Original BBP-Formula (4-Term)](https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula)
+
+$$\pi \ = \ \sum_{k=0}^\infty \dfrac{1}{16^k} \left(\dfrac{4}{8k + 1} - \dfrac{2}{8k + 4} - \dfrac{1}{8k+5} - \dfrac{1}{8k+6}\right)$$
+
 * [Bellard's Formula (7-Term)](https://bellard.org/pi/)
+
+$$\pi \ = \ \dfrac{1}{2^6} \sum_{k=0}^\infty \dfrac{(-1)^k}{2^{10k}} \left(-\dfrac{2^5}{4k + 1} - \dfrac{1}{4k + 3} + \dfrac{2^8}{10k + 1} - \dfrac{2^6}{10k + 3} - \dfrac{2^2}{10k + 5} - \dfrac{2^2}{10k + 7} + \dfrac{1}{10k + 9}\right)$$
 
 # Build
 Just use `make` and the project will build.
