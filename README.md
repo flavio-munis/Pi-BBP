@@ -16,6 +16,7 @@ Just use `make` and the project will build.
 
 # To-do
 * [x] Interative Menu
+* [ ] Verification of Digits
 * [ ] Checkpoints
 * [ ] Output To File
 * [ ] Arbritary Precision
