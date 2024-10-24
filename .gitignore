@@ -1,0 +1,11 @@
+# File Executable
+pi-bbp
+
+# Emacs Auto Save Files
+*~
+
+# Object Files
+obj/*
+
+# Core dump Files
+core.*
