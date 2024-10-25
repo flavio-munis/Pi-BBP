@@ -109,7 +109,24 @@ PageCode getU64IntFromInput(char*, uint64_t*);
 char* getUserInput();
 
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Get Max Threads Available in CPU.
+   @return uint16_t Number of Threads.
+ */
+/*-----------------------------------------------------------------*/
 uint16_t getMaxThreads();
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Get The Approximate Optimal Number of Threads for a Given
+           Offset.
+   @param  uint64_t Current Offset.
+   @return char*    Suggested Number of Threads.
+ */
+/*-----------------------------------------------------------------*/
+char* getOptimalThreads(uint64_t);
 
 
 /*-----------------------------------------------------------------*/
@@ -138,7 +155,7 @@ static char *pagesText[TOTAL_PAGES] = {
     "%s\n[4] Exit\n\n[0] Start Computation!\n",
     "Current Algorithm: %s\n\n[1] BBP-Original (4-Term)\n[2] Bellard "
     "(7-Term)\n\n[3] Return\n",
-    "Current Threads: %d\nMax Threads: %d\n",
+    "Current Threads: %d\nMax Threads: %d\nOptimal for Current Offset: %s\n",
 	"Current Offset: %s\n"};
 
 static Page staticPages[TOTAL_PAGES] = {
@@ -335,6 +352,25 @@ char* format64UInteger(uint64_t num) {
     return buffer;
 }
 
+char* getOptimalThreads(uint64_t offset) {
+
+	uint16_t maxThreads = getMaxThreads();
+  
+	if (offset < 1000 || maxThreads <= 2)
+		return "1-2 Threads";
+
+	if (offset < 10000 && maxThreads >= 4)
+		return "3-4 Threads";
+
+	if (offset < 1000000 && maxThreads >= 8)
+		return "6-8 Threads";
+
+	if (offset > 1000000 && maxThreads >= 12)
+          return "12+ Threads";
+
+	return "1-2 Threads";
+}
+
 PageCode mainPage(Page* main, Config* configs, uint16_t* nextIndex) {
 	
 	char buffer[BUFFER_SIZE];
@@ -476,11 +512,11 @@ PageCode threadsPage(Page* curr, Config* configs, uint16_t* nextIndex) {
 	maxThreads = getMaxThreads();
         
 	// Print Page Text
-	snprintf(buffer,
-			 BUFFER_SIZE,
-			 curr->pageText,
-			 configs -> nthreads,
-			 maxThreads);
+        snprintf(buffer, BUFFER_SIZE,
+                 curr->pageText,
+                 configs->nthreads,
+                 maxThreads,
+                 getOptimalThreads(configs -> startPos));
 
 	printf("%s", buffer);
 

@@ -46,7 +46,7 @@ uint16_t activeThreads;                     // Threads Used
 uint64_t d;                                  // Starting Position
 
 // Number of Elements Each Thread Will Work Per Interation
-uint64_t batchSize = 10000;
+uint64_t batchSize = 100;
 
 
 pthread_mutex_t counterMutex, accIndexMutex;
