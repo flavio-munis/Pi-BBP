@@ -20,6 +20,7 @@
 /*-----------------------------------------------------------------
                             Definitions
    -----------------------------------------------------------------*/
+#define BUFFER_SIZE 2048
 
 
 /*-----------------------------------------------------------------
@@ -72,8 +73,8 @@ uint32_t hashKey(const char*);
    @param  bool             If Optional Arguments Will Be Passed
 
    // Optional
-   @param  char* (*f)(char*, void*) Pointer to Text Function.
-   @param  void (*f)(char*) Pointer to Action Function.
+   @param  char* (*)(char*, void*) Pointer to Text Function.
+   @param  int (*)(char*, void*)   Pointer to Action Function.
    @param  uint32_t*        Hashes to Fowards Pages (In Order of Text).
    @param  uint16_t         Number of Foward Hashes.
    @param  uint32_t         Hash of The Return Page.

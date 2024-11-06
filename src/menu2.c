@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------*/
 /**
-  @file   menu.c
+  @file   menu2.c
   @author Flávio M.
   @brief  Iterative Shell Menu for Pi-BBP Project.
  */
@@ -33,12 +33,22 @@ typedef struct pageNode {
 	uint32_t hash;
 	char* text;
     char* (*textFunc) (char*, void*);
-	void (*actionFunc) (char*);
+    int (*actionFunc) (char*, void*);
 	uint32_t* forwardHashes;
 	uint16_t totalFoward;
 	uint32_t backHash;
 	PageType type;
 } PageNode;
+
+
+typedef enum {
+	PAGE_VALID_INPUT,
+	PAGE_NORMAL_OP,
+	PAGE_RETURN,
+	PAGE_INVALID_INPUT,
+	PAGE_ERROR,
+	PAGE_EXIT
+} PageCode;
 
 
 /*-----------------------------------------------------------------
@@ -74,26 +84,222 @@ MenuSt* initMenu(void* configs) {
 void freeMenu(MenuSt* menu) {
 
 	if (menu) {
-		if (menu -> table)
-			free(menu->table);
+    
+		if (menu -> table) {
 
+			for (int i = 0; i < menu -> tableSize; i++)
+				if (menu -> table + i)
+					if (menu->table[i].forwardHashes)
+						free(menu -> table[i].forwardHashes);
+                        
+			free(menu -> table);
+		}
+		
+		if (menu -> configs)
+			free(menu -> configs);
+                  
 		free(menu);
 	}
+}
+
+PageNode* getPageIndex(MenuSt* menu, uint32_t hash) {
+
+    uint16_t originalIndex = (hash & (uint16_t) (menu->tableSize - 1));
+    PageNode *table = menu -> table;
+
+	uint16_t indexIter = originalIndex;
+                      
+	while (table[indexIter].hash && table[indexIter].hash != hash) {
+
+          
+		indexIter++;
+
+		// Makes Table Circular
+		if (indexIter >= menu->tableSize)
+			indexIter = 0;
+
+		// If All Pages Where Already Checked
+		if (indexIter == originalIndex) {
+			fprintf(stderr, "Page Don't Exist!\n");
+			return NULL;
+		}
+	}
+	
+	return table + indexIter;
+}
+
+
+char* getUserInput() {
+
+	char *ret;
+	char *input = (char *)malloc(sizeof(char) * BUFFER_SIZE);
+	checkNullPointer((void*) input);	
+        
+	printf("\nOption: ");
+	ret = fgets(input, BUFFER_SIZE, stdin);
+
+	if (!ret)
+		return NULL;	
+        
+	return input;
+}
+
+
+PageCode getUInt16FromInput(char* input, uint16_t* optionPtr) {
+	uint32_t option;
+	char* end;
+        
+    option = strtoll(input, &end, 10);
+    
+    if (*end != '\n' || end == input || option < 0)
+		return PAGE_INVALID_INPUT;
+
+    *optionPtr = (uint16_t) option;
+    
+	return PAGE_VALID_INPUT;
+}
+
+PageCode processOption(MenuSt* menu, PageNode** page, uint16_t opt) {
+
+	PageNode* aux = *page;
+
+	// Option has special value 0 (return)
+	if (!opt){
+		*page = getPageIndex(menu, aux -> backHash);
+		return PAGE_RETURN;
+	}
+
+	// If it's not return than it must be a Foward Option
+	opt -= 1;
+        
+	// If page has no foward hashes or opt it's not in arry
+	if (!aux->forwardHashes || opt > aux->totalFoward) {
+		fprintf(stderr, "\nOption is Not In Forward Hashes Array\n");  
+		return PAGE_INVALID_INPUT;
+	}
+	
+	if (!aux -> forwardHashes[opt]) {
+		fprintf(stderr, "\nOption is Not In Forward Hashes Array\n");
+		return PAGE_INVALID_INPUT;
+	}
+        
+	*page = getPageIndex(menu, aux->forwardHashes[opt]);
+		
+	return PAGE_VALID_INPUT;	
+}
+
+PageCode runPage(MenuSt* menu, PageNode** page) {
+
+	PageNode* aux = *page;
+	char* pageText = aux -> text;
+	bool hasTextFunc = false;
+	char* userInput = NULL;
+	uint16_t option;
+	PageCode retCode = PAGE_NORMAL_OP;
+        
+	if (aux -> textFunc) {
+		pageText = aux -> textFunc(aux -> text, menu -> configs);
+		hasTextFunc = true;
+	}	
+                
+    switch (aux -> type) {
+
+        case TEXT:
+			printf("%s", pageText);
+		    userInput = getUserInput();
+
+			if (!userInput){
+			    retCode = PAGE_INVALID_INPUT;
+				break;
+			}
+
+			// Stop Warnings
+			option = 0;
+			retCode = getUInt16FromInput(userInput, &option);
+
+			if (retCode == PAGE_INVALID_INPUT)
+			    break;
+
+			retCode = processOption(menu, page, option);
+			break;
+
+        case INPUT:
+
+			if (!aux->actionFunc) {
+				fprintf(stderr, "\nPage Has No Action Function!\n");
+				return PAGE_ERROR;
+			}
+                        
+			printf("%s", pageText);
+		    userInput = getUserInput();
+                    
+			if (!userInput){
+			    retCode = PAGE_INVALID_INPUT;
+				break;
+			}
+                        
+			if (aux->actionFunc(userInput, menu->configs)) {
+				fprintf(stderr, "\nInvalid Input!\n");
+				retCode = PAGE_INVALID_INPUT;			
+			}
+			
+			*page = getPageIndex(menu, aux -> backHash);
+			retCode = PAGE_RETURN;
+                        
+			break;
+
+        case ACTION:
+			if (!aux->actionFunc) {
+				fprintf(stderr, "\nPage Has No Action Function!");
+				return PAGE_ERROR;
+			}
+            
+		    if (aux->actionFunc(NULL, menu->configs)){
+				fprintf(stderr, "\nError In Action Function!");
+				retCode = PAGE_ERROR;
+			}
+
+			*page = getPageIndex(menu, aux -> backHash);
+			retCode = PAGE_RETURN;
+			break;
+	}
+
+	if (hasTextFunc)
+		free(pageText);
+
+	if (userInput)
+		free(userInput);	
+
+	return retCode;
 }
 
 
 void runMenu(MenuSt *menu, uint32_t rootHash) {
 
-	for (int i = 0; i < menu -> tableSize; i++) {
-          if (menu->table[i].hash) {
-			  printf("BackHash: %u\n", menu->table[i].backHash);
-			  printf("Total Forward: %u\n", menu -> table[i].totalFoward);
-                          
-			  for (int j = 0; j < menu -> table[i].totalFoward; j++)
-				  printf("Forward[%d]: %u\n", j, menu -> table[i].forwardHashes[j]);
-                          
-			  printf("%s\n", menu->table[i].text);
-		  }
+	PageCode code = PAGE_NORMAL_OP;
+	PageNode* page = getPageIndex(menu, rootHash);
+
+	if (!page)
+		return;	
+        
+    while (page) {
+		PageNode* lastPage = page;
+		code = runPage(menu, &page);
+
+		switch (code) {
+
+		    case PAGE_ERROR:	
+			   fprintf(stderr, "\nError In Page!\n");
+			   return;
+
+		   case PAGE_RETURN:
+			   if (lastPage->hash == rootHash)
+				   return;
+			   break;
+
+		    default:
+				continue;
+		}
 	}
 }
 
@@ -108,7 +314,7 @@ void setEntry(MenuSt* menu, PageNode page) {
 	while (table[index].hash) {
 
 		if (hash == table[index].hash) {
-			fprintf(stderr, "Page Already Exists!");
+			fprintf(stderr, "\nPage Already Exists!\n");
 			return;
 		}
 
@@ -117,14 +323,7 @@ void setEntry(MenuSt* menu, PageNode page) {
 			index = 0;
 	}
 
-    table[index].hash = page.hash;
-    table[index].text = page.text;
-	table[index].textFunc = page.textFunc;
-	table[index].actionFunc = page.actionFunc;
-	table[index].forwardHashes = page.forwardHashes;
-	table[index].totalFoward = page.totalFoward;
-	table[index].backHash = page.backHash;
-	table[index].type = page.type;
+	memcpy(table + index, &page, sizeof(PageNode));
 }
 
 
@@ -134,7 +333,7 @@ int expandTable(MenuSt* menu) {
 	PageNode* newTable, *oldTable;
 	
 	if (newSize >= UINT16_MAX) {
-		fprintf(stderr, "New Table is Size is Bigger Than %u!", UINT16_MAX);
+		fprintf(stderr, "\nNew Table is Size is Bigger Than %u!\n", UINT16_MAX);
 		return 0;
 	}
 
@@ -148,9 +347,8 @@ int expandTable(MenuSt* menu) {
 	for (uint16_t i = 0; i < newSize; i++) {
 		PageNode page = oldTable[i];
 
-		if (page.hash) {
+		if (page.hash)
 		    setEntry(menu, page);
-		}
 	}
 
 	free(oldTable);
@@ -164,17 +362,16 @@ uint32_t addPage(MenuSt* menu, char* text, int hasOpt, ...) {
 	va_list args;
 	PageNode page;
 	uint32_t hash;
-	uint16_t index;
         
 	if (!menu) {
-		fprintf(stderr, "Menu Struct is Not Initialized!\n");
+		fprintf(stderr, "\nMenu Struct is Not Initialized!\n");
 		return 0;
 	}
 
 	if (menu -> currElements >= menu->tableSize / 2)
 		if (!expandTable(menu))
 		    if (menu->currElements >= menu->tableSize - 1) {
-				fprintf(stderr, "Table is Full!");
+				fprintf(stderr, "\nTable is Full!\n");
 				return 0;
 			}
         
@@ -186,7 +383,7 @@ uint32_t addPage(MenuSt* menu, char* text, int hasOpt, ...) {
 	page.hash = hashKey(text);
 	page.text = text;
 	page.textFunc = (hasOpt) ? va_arg(args, char* (*)(char*, void*)) : NULL;
-	page.actionFunc = (hasOpt) ? va_arg(args, void (*)(char*)) : NULL;
+	page.actionFunc = (hasOpt) ? va_arg(args, int (*)(char*, void*)) : NULL;
 	page.forwardHashes = (hasOpt) ? va_arg(args, uint32_t*) : NULL;
 	page.totalFoward = (hasOpt) ? va_arg(args, int) : 0;
 	page.backHash = (hasOpt) ? va_arg(args, uint32_t) : hash;

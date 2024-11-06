@@ -26,7 +26,7 @@ C_SOURCE = $(wildcard ${SRC}/*.c)
 OBJ_SOURCE = $(subst .c,.o,$(subst $(SRC),$(OBJ), $(C_SOURCE)))
 
 # Builds Project
-all: ${OBJ} $(PROJECT_NAME) clean_obj
+all: ${OBJ} $(PROJECT_NAME)
 
 $(OBJ):
 	@ mkdir obj
