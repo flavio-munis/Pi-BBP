@@ -11,20 +11,23 @@
                               Includes
   -----------------------------------------------------------------*/
 #include <stdio.h>
+#include <stdint.h>
+#include "../include/error-handler.h"
 #include "../include/bbp.h"
-#include "../include/menu.h"
+#include "../include/menu2.h"
+#include "../include/pages.h"
+
 
 /*-----------------------------------------------------------------
                                Main
   -----------------------------------------------------------------*/
 int main(int argc, char* argv[]) {
 
-    PageList* list = initPages();
-	PageCode result;
+	uint32_t rootHash;
+	MenuSt* menu = initPages(&rootHash);
 
-	do {
-		result = handlePage(list);
-	} while (result != PAGE_EXIT);
-    
+	runMenu(menu, rootHash);
+	freeMenu(menu);	
+        
 	return 0;
 }

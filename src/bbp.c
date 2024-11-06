@@ -597,6 +597,8 @@ void resetVariables() {
 	for (int i = 0; i < TOTAL_ACC; i++) {
         acc[i] = 0;
     }
+
+	total = NULL;
     
     accIndex = 0;
     count = 0;
