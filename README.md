@@ -25,22 +25,26 @@ AlL tests where made in my personal computer which have the following specs:
 * **Ram**: 12Gb
 
 ## Results
-The results are a median of 5 executions, each which the optimal number of threads available.
+The results are a median of 3 executions, we using the worst and best results for each algorithm and calculating it's improvement based on number of threads and in the batch size.
 
-| Algorithm | Offset | Threads |   Time   |
-|  -------  | ------ | ------- |  ------- |
-|  Bellard  |   1    |    2    | 0.00016s |
-| Original  |   1    |    2    | 0.00028s |
-|  Bellard  |  10^4  |   12    | 0.00132s |
-| Original  |  10^4  |   12    | 0.00090s |
-|  Bellard  |  10^6  |   12    | 0.05631s |
-| Original  |  10^6  |   12    | 0.00090s |
+| Algorithm | Offset | Best Threads | Best Batch Size | Best Median Time (s) | Worst to Best Improvement (%) |
+|-----------|--------|--------------|-----------------|-----------------------|-------------------------------|
+| BBP       | 1      | 1            | 1               | 0.000227              | 67.24                         |
+| Bellard   | 1      | 2            | 1               | 0.000227              | 72.42                         |
+| BBP       | 10     | 2            | 10              | 0.000253              | 66.27                         |
+| Bellard   | 10     | 1            | 10              | 0.000290              | 63.61                         |
+| BBP       | 10^4   | 12           | 100             | 0.000723              | 92.53                         |
+| Bellard   | 10^4   | 12           | 100             | 0.000667              | 88.98                         |
+| BBP       | 10^6   | 12           | 100             | 0.048973              | 91.24                         |
+| Bellard   | 10^6   | 12           | 1000            | 0.036590              | 87.49                         |
+| BBP       | 10^7   | 12           | 1000            | 0.542547              | 90.59                         |
+| Bellard   | 10^8   | 12           | 1000            | 0.406323              | 87.16                         |
 
 
 ## Offset, Threads and Batches
 In the image below, we can see a graph between the two algorithms and it's permofance as more threads are added, and when more work is given to then.
 
-![offset5](https://github.com/user-attachments/assets/dce6e498-4d9a-490a-b880-cd0b0dad9295)
+!![offset_10000000](https://github.com/user-attachments/assets/49e56f2d-d6be-471a-afd8-0047f868b695)
 
 # Inspirations
 * [y-cruncher](http://www.numberworld.org/y-cruncher/)
@@ -48,7 +52,7 @@ In the image below, we can see a graph between the two algorithms and it's permo
 
 # To-do
 * [x] Interative Menu
-* [ ] Verification of Digits
+* [ ] Digits Verification
 * [ ] Checkpoints
 * [ ] Output To File
 * [ ] Arbritary Precision
