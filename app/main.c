@@ -30,7 +30,7 @@ Config* parseArguments(int argc, char* argv[]) {
 	Algorithm algo;
         
 	if (argc != 4) {
-		invalidProgramCall(argv[0], "[algorithm] [offset] [threads] [batchSize]\n  [Algorithm] = bellard, original");
+		invalidProgramCall(argv[0], "[algorithm] [offset] [threads]\n  [Algorithm] = bellard, original");
 	}
 
 	if (!strcmp(argv[1], "bellard"))
