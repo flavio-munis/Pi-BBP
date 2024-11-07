@@ -27,21 +27,42 @@
                          Structs and Enums
   -----------------------------------------------------------------*/
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief Page For Menu.
+*/
+/*-----------------------------------------------------------------*/
 typedef struct pageNode PageNode;
 
-typedef struct menuSt {
-	PageNode *table;
-    uint32_t rootHash;
-	size_t tableSize;
-	size_t currElements;
-    void* configs;
-} MenuSt;
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief Types of Pages.
+*/
+/*-----------------------------------------------------------------*/
 typedef enum {
-	TEXT,
-	INPUT,
-	ACTION
-}PageType;
+	TEXT,  // Has Text But Executes No Actions, Bridge Bettween Pages
+	INPUT, // Has Text and Executes a Action That Need User Input
+	ACTION // No Text, Executes a Action And Returns To Calle Page
+} PageType;
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief Shell Menu Based in a Hash Table. Hashes Are Generated
+   Based on Page Text, So Every Menu Page *Must* Be Unique.
+
+   Table is of type size_t but can only hold up to 65535 (UINT16_MAX)
+   Pages.
+*/
+/*-----------------------------------------------------------------*/
+typedef struct menuSt {
+	PageNode *table;     // Hash Table
+    uint32_t rootHash;   // Hash Of Root Page
+	size_t tableSize;    // Total Size of Table
+	size_t currElements; // Total Elements in Table
+    void* configs;       // Configuration Struct That The Menu Operates on
+} MenuSt;
 
 
 /*-----------------------------------------------------------------
@@ -50,20 +71,41 @@ typedef enum {
 
 /*-----------------------------------------------------------------*/
 /**
-   @brief  Init All Pages and Default Configs.
-   @return PageList* Pointer to PagesList Struct.
+   @brief  Init Menu Struct and It's Members.
+   @return MenuSt* Pointer to Menu Struct.
 */
 /*-----------------------------------------------------------------*/
 MenuSt* initMenu(void*);
 
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief Free All Memory Allocated for The Menu and It's Members.
+   @param MenuSt* Pointer to Menu Struct.
+*/
+/*-----------------------------------------------------------------*/
 void freeMenu(MenuSt*);
 
 
-void runMenu(MenuSt *, uint32_t);
+/*-----------------------------------------------------------------*/
+/**
+   @brief Loop That Executes The Menu Pages. Only Exits When Return
+   Is Choosed on Root Page.
+   @param MenuSt* Pointer to Menu Struct.
+*/
+/*-----------------------------------------------------------------*/
+void runMenu(MenuSt*);
 
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief  MurmurHash2 Algorithm For Generating Hashes.
+   @param  const char* Page Text.
+   @return uint32_t    Hash Generated.
+*/
+/*-----------------------------------------------------------------*/
 uint32_t hashKey(const char*);
+
 
 /*-----------------------------------------------------------------*/
 /**
@@ -83,7 +125,6 @@ uint32_t hashKey(const char*);
    @return uint32_t Hash of Current Page.
 */
 /*-----------------------------------------------------------------*/
-uint32_t addPage(MenuSt*, char*, int, ...);
-
+uint32_t addPage(MenuSt *, char *, int, ...);
 
 #endif

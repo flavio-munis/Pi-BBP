@@ -29,7 +29,9 @@
 
 #endif
 
-
+/*-----------------------------------------------------------------
+                            Definitions
+   -----------------------------------------------------------------*/
 #define TOTAL_PAGES 7
 
 static char *pagesText[TOTAL_PAGES] = {
@@ -77,6 +79,7 @@ char* getAlgoString(Algorithm);
 /*-----------------------------------------------------------------*/
 char *format64UInteger(uint64_t);
 
+
 /*-----------------------------------------------------------------*/
 /**
    @brief  Get Max Threads Available in CPU.
@@ -86,6 +89,42 @@ char *format64UInteger(uint64_t);
 uint16_t getMaxThreads();
 
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Convert a String to a 64 Bit Unsigned Integer. Will Not
+   Throw Error For Values Over 64 Bits.
+   @param  char*     String to be Converted.
+   @param  uint64_t* Pointer in Which the Result Be Stored.
+   @return int       Error(1) /Success(0) Code in Operation.
+ */
+/*-----------------------------------------------------------------*/
+int getU64IntFromInput(char*, uint64_t*);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Convert a String to a 16 Bit Unsigned Integer. Will Throw
+   Error For Values Over 16 Bits.
+   @param  char*     String to be Converted.
+   @param  uint64_t* Pointer in Which the Result Be Stored.
+   @return int       Error(1) /Success(0) Code in Operation.
+ */
+/*-----------------------------------------------------------------*/
+int getU16IntFromInput(char*, uint16_t*);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Get The Approximate Optimal Number of Threads for a Given
+           Offset.
+   @param  uint64_t Current Offset.
+   @return char*    Suggested Number of Threads.
+ */
+/*-----------------------------------------------------------------*/
+char* getOptimalThreads(uint64_t);
+
+
+// Pages Functions (Text and Actions)
 char* mainPage(char*, void*);
 
 char* algoPageText(char*, void*);
@@ -101,12 +140,11 @@ int offsetPageAction1(char*, void*);
 
 int computeBBP(char *, void *);
 
-Config *initDefaultConfigs();
 
 /*-----------------------------------------------------------------
                       Functions Implementation
   -----------------------------------------------------------------*/
-MenuSt* initPages(uint32_t* rootHash) {
+MenuSt* initPages() {
 
 	Config* configs = initDefaultConfigs();
 	MenuSt* menu = initMenu((void*) configs);
@@ -143,7 +181,7 @@ MenuSt* initPages(uint32_t* rootHash) {
 	addPage(menu, pagesText[6], 1, NULL, &computeBBP, NULL, 0, hash[0],
                 ACTION);
 
-	*rootHash = hash[0];
+    menu -> rootHash = hash[0];
             
 	return menu;
 }

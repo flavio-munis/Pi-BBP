@@ -2,7 +2,7 @@
 /**
   @file   menu2.c
   @author Flávio M.
-  @brief  Iterative Shell Menu for Pi-BBP Project.
+  @brief  Interative Shell Menu for Pi-BBP Project.
  */
 /*-----------------------------------------------------------------*/
 
@@ -29,18 +29,30 @@
 /*-----------------------------------------------------------------
                          Structs and Enums
   -----------------------------------------------------------------*/
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief Page Struct.
+   Malloc  forwardHashes array to avoid erros.
+*/
+/*-----------------------------------------------------------------*/
 typedef struct pageNode {
-	uint32_t hash;
-	char* text;
-    char* (*textFunc) (char*, void*);
-    int (*actionFunc) (char*, void*);
-	uint32_t* forwardHashes;
-	uint16_t totalFoward;
-	uint32_t backHash;
-	PageType type;
+	uint32_t hash;                    // Page Hash
+	char* text;                       // Page Text
+    char* (*textFunc) (char*, void*); // Ptr to Text Function(Type TEXT, INPUT)
+    int (*actionFunc) (char*, void*); // Ptr to Action Function(Type INPUT, ACTION)
+	uint32_t* forwardHashes;        // In Text Order Array With All Foward Pages Hashes
+	uint16_t totalFoward;             // Total Forward Hashes 
+	uint32_t backHash;                // Hash For Return Page
+	PageType type;                    // Type of Current Page
 } PageNode;
 
 
+/*-----------------------------------------------------------------*/
+/**
+   @brief Page Operations to Improve Readabilty and Maintenance.
+*/
+/*-----------------------------------------------------------------*/
 typedef enum {
 	PAGE_VALID_INPUT,
 	PAGE_NORMAL_OP,
@@ -57,12 +69,80 @@ typedef enum {
 
 /*-----------------------------------------------------------------*/
 /**
-   @brief  Free Menu.
-   @return Config* Pointer to Configuration Struct.
+   @brief  Check Table For a Page and Returns it.
+   @param  MenuSt*   Pointer to Menu Struct.
+   @param  uint32_t  Hash to Search on Page.
+   @return PageNode* Pointer to Searched Page / NULL if Not Found.
+*/
+/*-----------------------------------------------------------------*/
+PageNode* getPage(MenuSt*, uint32_t);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Get User Input up To '\n'.
+   @return char* User Input (Mallocd Must Free After).
+*/
+/*-----------------------------------------------------------------*/
+char* getUserInput();
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Convert a String to a 16 Bit Unsigned Integer. Will Throw
+   Error For Values Over 16 Bits.
+   @param  char*     String to be Converted.
+   @param  uint64_t* Pointer in Which the Result Be Stored.
+   @return PageCode  Code for Page Operation.
  */
 /*-----------------------------------------------------------------*/
-void freeMenu(MenuSt*);
+PageCode getUInt16FromInput(char*, uint16_t*);
 
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Tries to Get The Forward Page Selected By The User. If
+   Page is Found, updates PageNode** pointer to The New Page.
+   @param  MenuSt*    Pointer to Menu Struct.
+   @param  PageNode** Pointer to Pointer of Current Page.
+   @param  uint16_t   User Option.
+   @return PageCode   Code for Page Operation.
+ */
+/*-----------------------------------------------------------------*/
+PageCode processOption(MenuSt*, PageNode**, uint16_t);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Run Current Page and Execute it's Actions.
+   @param  MenuSt*    Pointer to Menu Struct.
+   @param  PageNode** Pointer to Pointer of Current Page.
+   @return PageCode   Code for Page Operation.
+ */
+/*-----------------------------------------------------------------*/
+PageCode runPage(MenuSt*, PageNode**);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief Set a Node on The Table.
+   @param MenuSt*  Pointer to Menu Struct.
+   @param PageNode Page Struct Settings.
+ */
+/*-----------------------------------------------------------------*/
+void setEntry(MenuSt*, PageNode);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief  Expand Table Size if It Half Full.
+   Max Table Size is 65535 (UINT16_MAX).
+   @param  MenuSt* Pointer to Menu Struct.
+   @return int     Success(0) /Error(1) in Operation.
+ */
+/*-----------------------------------------------------------------*/
+int expandTable(MenuSt*);
+    
 
 /*-----------------------------------------------------------------
                       Functions Implementation
@@ -76,6 +156,7 @@ MenuSt* initMenu(void* configs) {
 
 	newMenuSt -> tableSize = INITIAL_SIZE;
 	newMenuSt -> currElements = 0;
+	newMenuSt -> rootHash = 0;	
 	newMenuSt -> configs = configs;
         
 	return newMenuSt;
@@ -87,10 +168,15 @@ void freeMenu(MenuSt* menu) {
     
 		if (menu -> table) {
 
-			for (int i = 0; i < menu -> tableSize; i++)
-				if (menu -> table + i)
-					if (menu->table[i].forwardHashes)
-						free(menu -> table[i].forwardHashes);
+			for (int i = 0; i < menu -> tableSize; i++){
+				if (!menu -> table + i)
+					continue;
+
+				if (!menu->table[i].forwardHashes)
+					continue;
+
+				free(menu -> table[i].forwardHashes);
+			}
                         
 			free(menu -> table);
 		}
@@ -102,7 +188,7 @@ void freeMenu(MenuSt* menu) {
 	}
 }
 
-PageNode* getPageIndex(MenuSt* menu, uint32_t hash) {
+PageNode* getPage(MenuSt* menu, uint32_t hash) {
 
     uint16_t originalIndex = (hash & (uint16_t) (menu->tableSize - 1));
     PageNode *table = menu -> table;
@@ -165,7 +251,7 @@ PageCode processOption(MenuSt* menu, PageNode** page, uint16_t opt) {
 
 	// Option has special value 0 (return)
 	if (!opt){
-		*page = getPageIndex(menu, aux -> backHash);
+		*page = getPage(menu, aux -> backHash);
 		return PAGE_RETURN;
 	}
 
@@ -183,31 +269,35 @@ PageCode processOption(MenuSt* menu, PageNode** page, uint16_t opt) {
 		return PAGE_INVALID_INPUT;
 	}
         
-	*page = getPageIndex(menu, aux->forwardHashes[opt]);
+	*page = getPage(menu, aux->forwardHashes[opt]);
 		
 	return PAGE_VALID_INPUT;	
 }
 
 PageCode runPage(MenuSt* menu, PageNode** page) {
 
-	PageNode* aux = *page;
+	PageNode* aux = *page;         // To avoid multiple dereferencings
 	char* pageText = aux -> text;
-	bool hasTextFunc = false;
+	bool hasTextFunc = false;      // To avoid using more than one variable
 	char* userInput = NULL;
 	uint16_t option;
 	PageCode retCode = PAGE_NORMAL_OP;
-        
+
+	// Check if Current Page Has a Text Function
 	if (aux -> textFunc) {
 		pageText = aux -> textFunc(aux -> text, menu -> configs);
 		hasTextFunc = true;
-	}	
-                
+	}
+
+	// For Current Page Type
     switch (aux -> type) {
 
         case TEXT:
+			// Print text and awaits user input
 			printf("%s", pageText);
 		    userInput = getUserInput();
 
+			// No Input From User
 			if (!userInput){
 			    retCode = PAGE_INVALID_INPUT;
 				break;
@@ -215,21 +305,29 @@ PageCode runPage(MenuSt* menu, PageNode** page) {
 
 			// Stop Warnings
 			option = 0;
+
+			// Convert User Input to a 16-Bit Unsigned Integer			
 			retCode = getUInt16FromInput(userInput, &option);
 
-			if (retCode == PAGE_INVALID_INPUT)
-			    break;
-
+			// Check if Convertion Was Successful
+			if (retCode == PAGE_INVALID_INPUT) {
+				fprintf(stderr, "\nInvalid Input!\n");
+				break;
+			}
+                        
+			// Process User Option and Exists
 			retCode = processOption(menu, page, option);
 			break;
 
         case INPUT:
 
-			if (!aux->actionFunc) {
+			// Exit if Page Has no Action Function
+			if (!aux -> actionFunc) {
 				fprintf(stderr, "\nPage Has No Action Function!\n");
 				return PAGE_ERROR;
 			}
-                        
+
+			// Print text and awaits user input
 			printf("%s", pageText);
 		    userInput = getUserInput();
                     
@@ -237,36 +335,43 @@ PageCode runPage(MenuSt* menu, PageNode** page) {
 			    retCode = PAGE_INVALID_INPUT;
 				break;
 			}
-                        
-			if (aux->actionFunc(userInput, menu->configs)) {
+
+			// Exectues Action Function and Check it's return
+			if (aux -> actionFunc(userInput, menu->configs)) {
 				fprintf(stderr, "\nInvalid Input!\n");
 				retCode = PAGE_INVALID_INPUT;			
 			}
-			
-			*page = getPageIndex(menu, aux -> backHash);
+
+			// Return to Previous Page
+			*page = getPage(menu, aux -> backHash);
 			retCode = PAGE_RETURN;
-                        
+
 			break;
 
         case ACTION:
-			if (!aux->actionFunc) {
+			// Exit if Page Has no Action Function
+			if (!aux -> actionFunc) {
 				fprintf(stderr, "\nPage Has No Action Function!");
 				return PAGE_ERROR;
 			}
-            
+
+            // Exectues Action Function and Check it's return
 		    if (aux->actionFunc(NULL, menu->configs)){
 				fprintf(stderr, "\nError In Action Function!");
 				retCode = PAGE_ERROR;
 			}
 
-			*page = getPageIndex(menu, aux -> backHash);
+			// Return to Previous Page
+			*page = getPage(menu, aux -> backHash);
 			retCode = PAGE_RETURN;
 			break;
 	}
 
+	// If Memory Was Allocated For Text
 	if (hasTextFunc)
 		free(pageText);
 
+	// If Memory Was Allocated For User Input
 	if (userInput)
 		free(userInput);	
 
@@ -274,14 +379,19 @@ PageCode runPage(MenuSt* menu, PageNode** page) {
 }
 
 
-void runMenu(MenuSt *menu, uint32_t rootHash) {
+void runMenu(MenuSt *menu) {
 
 	PageCode code = PAGE_NORMAL_OP;
-	PageNode* page = getPageIndex(menu, rootHash);
-
-	if (!page)
-		return;	
+	uint32_t rootHash = menu -> rootHash;
+	PageNode* page = getPage(menu, rootHash);
+	
+    // If Hash of Root Page is Invalid
+	if (!page || !rootHash) {
+		fprintf(stderr, "\nRoot Page Not Found/ Root Page Hash Not Defined!\n");	
+		return;
+	}
         
+	// Run Loop Unil Root Page Return Code
     while (page) {
 		PageNode* lastPage = page;
 		code = runPage(menu, &page);
@@ -318,6 +428,7 @@ void setEntry(MenuSt* menu, PageNode page) {
 			return;
 		}
 
+		// Increaces Index in a Circular Way
 		index++;
 		if (index >= menu->tableSize)
 			index = 0;
@@ -331,10 +442,11 @@ int expandTable(MenuSt* menu) {
 
 	size_t newSize = menu->tableSize * 2;
 	PageNode* newTable, *oldTable;
-	
+
+    // Check If New Table Size is Within Bounds
 	if (newSize >= UINT16_MAX) {
 		fprintf(stderr, "\nNew Table is Size is Bigger Than %u!\n", UINT16_MAX);
-		return 0;
+		return 1;
 	}
 
     newTable = (PageNode*) calloc(sizeof(PageNode), newSize);
@@ -343,7 +455,8 @@ int expandTable(MenuSt* menu) {
 	oldTable = menu->table;
 	menu -> table = newTable;
 	menu -> tableSize = newSize;
-        
+
+    // Reallocates All Nodes
 	for (uint16_t i = 0; i < newSize; i++) {
 		PageNode page = oldTable[i];
 
@@ -353,7 +466,7 @@ int expandTable(MenuSt* menu) {
 
 	free(oldTable);
         
-	return 1;
+	return 0;
 }
 
 
@@ -369,7 +482,7 @@ uint32_t addPage(MenuSt* menu, char* text, int hasOpt, ...) {
 	}
 
 	if (menu -> currElements >= menu->tableSize / 2)
-		if (!expandTable(menu))
+		if (expandTable(menu))
 		    if (menu->currElements >= menu->tableSize - 1) {
 				fprintf(stderr, "\nTable is Full!\n");
 				return 0;

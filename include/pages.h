@@ -23,10 +23,9 @@
 /*-----------------------------------------------------------------*/
 /**
    @brief  Init All Pages and Default Configs.
-   @return PageList* Pointer to PagesList Struct.
+   @return MenuSt* Pointer to Menu.
 */
 /*-----------------------------------------------------------------*/
-MenuSt* initPages(uint32_t*);
-
+MenuSt* initPages();
 
 #endif

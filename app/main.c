@@ -23,10 +23,9 @@
   -----------------------------------------------------------------*/
 int main(int argc, char* argv[]) {
 
-	uint32_t rootHash;
-	MenuSt* menu = initPages(&rootHash);
+	MenuSt* menu = initPages();
 
-	runMenu(menu, rootHash);
+	runMenu(menu);
 	freeMenu(menu);	
         
 	return 0;
