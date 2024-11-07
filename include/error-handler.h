@@ -80,7 +80,19 @@
    @param char* Custom Error Message
  */
 /*-----------------------------------------------------------------*/
-#define invalidArgumentException(exp) fprintf(stderr, "Invalid Argument Exception!\n%s\n", exp); 
+#define invalidArgumentException(exp) fprintf(stderr, "Invalid Argument Exception!\n%s\n", exp);
+
+
+/*-----------------------------------------------------------------*/
+/**
+   @brief Throws an Exection Error Message to User
+   @param char* Program Name
+   @param char* Description
+*/
+/*-----------------------------------------------------------------*/
+#define invalidProgramCall(progName, args) \
+	fprintf(stderr, "Usage: \n %s %s\n", progName, args); \
+    exit(EXIT_FAILURE);
 
 
 /*-----------------------------------------------------------------*/

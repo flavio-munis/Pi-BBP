@@ -613,7 +613,7 @@ void calcBBP(Config* currConfigs) {
         
 	d = currConfigs -> startPos;
     activeThreads = currConfigs -> nthreads;
-    algoInUse = currConfigs -> algo;
+    algoInUse = currConfigs->algo;
     configAlgorithm();
     
 #ifdef DEBUG

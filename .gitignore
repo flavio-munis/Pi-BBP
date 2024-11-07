@@ -9,3 +9,6 @@ obj/*
 
 # Core dump Files
 core.*
+
+# Utils 
+utils/*
