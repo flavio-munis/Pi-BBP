@@ -34,12 +34,12 @@ $(OBJ):
 
 $(PROJECT_NAME): $(OBJ_SOURCE) $(MAIN_OBJ)
 	@ echo 'Compiling Executable File...'
-	@ $(CC) $^ -lm -o $@ -O2
+	@ $(CC) $^ -lm -o $@ -O3
 	@ echo 'Finished Building Project!'
 
 $(OBJ)/%.o: $(SRC)/%.c $(INCLUDE)/%.h
 	@ echo 'Building and Linking File: $@'
-	@ $(CC) $< $(CC_FLAGS) $@ -O2
+	@ $(CC) $< $(CC_FLAGS) $@ -O3
 	@ echo ' '
 
 $(OBJ)/main.o: $(APP)/main.c

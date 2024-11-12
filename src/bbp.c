@@ -24,7 +24,8 @@
 
 
 /*-----------------------------------------------------------------
-                            Definitions  -----------------------------------------------------------------*/
+                            Definitions
+-----------------------------------------------------------------*/
 #define PRECISION 10     // Number of Digits after Starting Position
 #define EPSILON 1e-17    // Epsilon For Floating Point Precision
 #define TOTAL_ACC 15     // Total Accumulators
@@ -32,7 +33,8 @@
 
 
 /*-----------------------------------------------------------------
-                          Global Variables -----------------------------------------------------------------*/
+                          Global Variables
+-----------------------------------------------------------------*/
 Algorithm algoInUse;
 uint64_t upperBound;
 long double (*leftSum) (uint64_t);     // Wrapper For Left Summation Function
