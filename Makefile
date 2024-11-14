@@ -17,6 +17,7 @@ SRC = ./src
 APP = ./app
 OBJ = ./obj
 INCLUDE = ./include
+TEMP = ./temp
 
 # Files
 MAIN = ${APP}/main.c
@@ -25,8 +26,18 @@ C_HEADERS = $(wildcard ${INCLUDE}/*.h)
 C_SOURCE = $(wildcard ${SRC}/*.c)
 OBJ_SOURCE = $(subst .c,.o,$(subst $(SRC),$(OBJ), $(C_SOURCE)))
 
+TEMP_SOURCES = $(wildcard ${TEMP}/*.c)
+TEMP_EXEC_NAMES = $(patsubst ${TEMP}/%.c, %, ${TEMP_SOURCES})
+
 # Builds Project
 all: ${OBJ} $(PROJECT_NAME)
+
+temp: $(TEMP_EXEC_NAMES)
+
+$(TEMP_EXEC_NAMES): % : $(TEMP)/%.c
+	@ echo 'Compiling $< as $@...'
+	@ $(CC) $< -lm -Wall -mavx2 -march=native -pg -o $@
+	@ echo '$@ Compiled!'
 
 $(OBJ):
 	@ mkdir obj
@@ -61,6 +72,10 @@ clean_core:
 clean_auto_save:
 	@ echo "Cleaning All AutoSave Files.."
 	@ rm -rf ./*~
+
+clean_seq:
+	@ echo "Removing seq Executable..."
+	@ rm -f ./seq
 
 # Run Project
 run:
