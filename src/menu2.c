@@ -15,9 +15,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../include/bbp.h"
-#include "../include/menu2.h"
-#include "../include/error-handler.h"
+#include "bbp.h"
+#include "menu2.h"
+#include "error-handler.h"
 
 /*-----------------------------------------------------------------
                             Definitions

@@ -19,8 +19,8 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
-#include "../include/bbp.h"
-#include "../include/timer.h"
+#include "bbp.h"
+#include "timer.h"
 
 
 /*-----------------------------------------------------------------
@@ -312,7 +312,7 @@ uint64_t modPowBarret(uint64_t n,
 	}
 
 	return result;
-}        
+}
 
 
 long double lhs(int j, uint64_t s) {

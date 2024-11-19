@@ -8,6 +8,7 @@ CC = gcc
 CC_FLAGS =  -c \
 	-lm \
 	-Wall \
+	-I $(INCLUDE) \
 	-pthread \
 	-pedantic \
 	-o

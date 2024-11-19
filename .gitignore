@@ -4,6 +4,9 @@ pi-bbp
 # Emacs Auto Save Files
 *~
 
+# Compile JSON
+compile_commands.json
+
 # Object Files
 obj/*
 

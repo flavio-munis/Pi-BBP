@@ -13,10 +13,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "../include/error-handler.h"
-#include "../include/bbp.h"
-#include "../include/menu2.h"
-#include "../include/pages.h"
+#include "error-handler.h"
+#include "bbp.h"
+#include "menu2.h"
+#include "pages.h"
 
 
 /*-----------------------------------------------------------------
