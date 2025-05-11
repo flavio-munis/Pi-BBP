@@ -37,7 +37,7 @@ temp: $(TEMP_EXEC_NAMES)
 
 $(TEMP_EXEC_NAMES): % : $(TEMP)/%.c
 	@ echo 'Compiling $< as $@...'
-	@ $(CC) $< -lm -Wall -mavx2 -march=native -pg -o $@
+	@ $(CC) $< -Wall -O3 -pg -lgmp -lm -pthread -I $(INCLUDE) -o $@
 	@ echo '$@ Compiled!'
 
 $(OBJ):
